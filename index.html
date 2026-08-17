@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อสอบปลายภาค - อินเตอร์เฟซเบื้องต้น</title>
+    <style>
+        /* ============================
+           CSS: Cyberpunk + Glassmorphism ฟ
+           ============================ */
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --bg-color: #050510;
+            --glass-bg: rgba(10, 10, 25, 0.6);
+            --glass-border: rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 0, 255, 0.08), transparent 25%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            
+            /* ป้องกันการคลุมดำข้อความเพื่อคัดลอก */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Scanline effect */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1), inset 0 0 10px rgba(255, 0, 255, 0.05);
+            position: relative;
+            z-index: 10;
+            margin: 40px 0;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Share Tech Mono', 'Sarabun', monospace;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .text-neon-blue { color: var(--neon-blue); text-shadow: 0 0 8px var(--neon-blue); }
+        .text-neon-pink { color: var(--neon-pink); text-shadow: 0 0 8px var(--neon-pink); }
+        
+        /* Dashboard Info Text */
+        .info-panel {
+            border-left: 4px solid var(--neon-pink);
+            padding-left: 15px;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .info-panel p { margin-bottom: 5px; }
+
+        /* Inputs & Buttons */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-size: 1.2rem;
+            border-radius: 5px;
+            outline: none;
+            margin-bottom: 20px;
+            font-family: 'Share Tech Mono', 'Sarabun', monospace;
+            transition: box-shadow 0.3s ease;
+            
+            /* อนุญาตให้พิมพ์และเลือกข้อความในช่องกรอกชื่อได้ */
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        input[type="text"]:focus {
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: transparent;
+            color: #fff;
+            border: 2px solid var(--neon-blue);
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Share Tech Mono', 'Sarabun', monospace;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        button.btn-pink {
+            border-color: var(--neon-pink);
+        }
+
+        button.btn-pink:hover {
+            background: var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        /* Exam Section */
+        #timer {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.5rem;
+            color: var(--neon-pink);
+            text-align: right;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        .question-box {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--neon-blue);
+        }
+
+        .options-list {
+            list-style: none;
+        }
+
+        .option-item {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-item:hover {
+            border-color: var(--neon-blue);
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        .option-item.selected {
+            border-color: var(--neon-pink);
+            background: rgba(255, 0, 255, 0.1);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+        }
+
+        /* Screens Management */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loader */
+        .loader {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid var(--neon-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- =======================
+             SCREEN 1: Intro
+             ======================= -->
+        <div id="intro-screen" class="screen active">
+            <h1 class="text-neon-blue" style="margin-bottom: 20px;">SYSTEM // INITIATED</h1>
+            
+            <div class="info-panel">
+                <p><strong>วิทยาลัยสารพัดช่างศรีสะเกษ</strong></p>
+                <p>สำนักงานคณะกรรมการการอาชีวศึกษา กระทรวงศึกษาธิการ</p>
+                <p class="text-neon-pink">ต้นฉบับข้อสอบปลายภาค ภาคเรียนที่ 1/2569 รูปแบบออนไลน์ (QR-Code)</p>
+                <br>
+                <p><strong>รหัสวิชา:</strong> 20105-2021</p>
+                <p><strong>ชื่อวิชา:</strong> อินเตอร์เฟซเบื้องต้น ท-ป-น 1-3-2</p>
+                <p>นักศึกษาสาขาวิชา อิเล็กทรอนิกส์ ระดับชั้น ปวช.3 ทวิศึกษา</p>
+                <br>
+                <p><strong>ข้อสอบจำนวน:</strong> 40 ข้อ | <strong>คะแนนเต็ม:</strong> 40 คะแนน</p>
+                <p><strong>เวลา:</strong> 60 นาที</p>
+                <p><strong>ครูผู้ออกข้อสอบ:</strong> นายวิทยากร วรรณา</p>
+            </div>
+
+            <button onclick="showScreen('login-screen')">ถัดไป (NEXT) >></button>
+        </div>
+
+        <!-- =======================
+             SCREEN 2: Login / Name Input
+             ======================= -->
+        <div id="login-screen" class="screen">
+            <h2 class="text-neon-pink" style="margin-bottom: 20px;">USER // AUTHENTICATION</h2>
+            <p style="margin-bottom: 10px; color: #ccc;">กรุณากรอกชื่อ-นามสกุล ก่อนทำข้อสอบ</p>
+            <input type="text" id="studentName" placeholder="ระบุ ชื่อ-นามสกุล ของคุณที่นี่..." autocomplete="off">
+            <button class="btn-pink" onclick="startExam()">เริ่มทำข้อสอบ (START EXAM)</button>
+        </div>
+
+        <!-- =======================
+             SCREEN 3: Exam
+             ======================= -->
+        <div id="exam-screen" class="screen">
+            <div id="timer">00:00</div>
+            <h3 class="text-neon-blue" id="question-progress" style="text-align: left; margin-bottom: 10px;">Q: 1/40</h3>
+            
+            <div class="question-box" id="question-text">
+                <!-- คำถามจะถูกโหลดมาแสดงที่นี่ -->
+            </div>
+            
+            <ul class="options-list" id="options-container">
+                <!-- ตัวเลือกจะถูกโหลดมาแสดงที่นี่ -->
+            </ul>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-next" onclick="nextQuestion()">ข้อถัดไป (NEXT)</button>
+                <button id="btn-submit" class="btn-pink" style="display: none;" onclick="submitExam()">ส่งคำตอบ (SUBMIT)</button>
+            </div>
+        </div>
+
+        <!-- =======================
+             SCREEN 4: Result & Saving
+             ======================= -->
+        <div id="result-screen" class="screen">
+            <h1 class="text-neon-blue">EXAM // COMPLETE</h1>
+            <div id="score-display" style="font-size: 2rem; text-align: center; margin: 20px 0; line-height: 1.5; text-shadow: 0 0 15px var(--neon-blue);"></div>
+            
+            <div id="saving-status" style="text-align: center;">
+                <div class="loader"></div>
+                <p class="text-neon-pink">กำลังอัปโหลดข้อมูลเข้าสู่ระบบ...</p>
+            </div>
+            
+            <div id="success-message" style="display: none; text-align: center; color: #0f0;">
+                <p>บันทึกข้อมูลเสร็จสมบูรณ์ ขอบคุณที่เข้าร่วมการทดสอบ</p>
+            </div>
+            <div id="error-message" style="display: none; text-align: center; color: #f00;">
+                <p>เกิดข้อผิดพลาดในการบันทึกข้อมูล โปรดแจ้งผู้คุมสอบ</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* ============================
+           JAVASCRIPT LOGIC
+           ============================ */
+
+        // 1. URL สำหรับส่งข้อมูลไปยัง Google Apps Script ที่ระบุมาใหม่
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbysAIgOj_Ypv602_seaorN6IUQOKbFSwh1Iq_gR00XoYcsJZrDynSqiqSJcGR9J-GyW/exec";
+
+        // 2. ข้อมูลต้นฉบับข้อสอบวิชาอินเตอร์เฟซเบื้องต้น
+        const rawQuestions = [
+            { q: "ข้อใดคือความหมายที่ถูกต้องที่สุดของคำว่า \"อินเตอร์เฟซ\" (Interface) ในงานอิเล็กทรอนิกส์และคอมพิวเตอร์", options: ["อุปกรณ์ที่ใช้สำหรับเพิ่มความเร็วของหน่วยประมวลผลกลาง", "สื่อหรือช่องทางที่ใช้เชื่อมต่อและแลกเปลี่ยนข้อมูลระหว่างระบบหรืออุปกรณ์ตั้งแต่สองระบบขึ้นไป", "ระบบจัดเก็บข้อมูลสำรองที่มีความจุสูงในคอมพิวเตอร์", "โปรแกรมสำหรับป้องกันไวรัสและภัยคุกคามทางอินเทอร์เน็ต"], ans: 1 },
+            { q: "พอร์ตสื่อสารมาตรฐานใดในคอมพิวเตอร์ที่นิยมใช้เชื่อมต่อกับอุปกรณ์ต่อพ่วงทั่วไป เช่น เมาส์ และคีย์บอร์ด ในปัจจุบันมากที่สุด", options: ["Parallel Port", "Serial Port แบบ RS-232", "USB (Universal Serial Bus)", "VGA Port"], ans: 2 },
+            { q: "ข้อดีหลักของการรับส่งข้อมูลแบบอนุกรม (Serial Communication) เมื่อเทียบกับการรับส่งข้อมูลแบบขนาน (Parallel Communication) คือข้อใด", options: ["ความเร็วในการส่งข้อมูลสูงกว่าในทุกระยะทาง", "ใช้จำนวนสายสัญญาณน้อยกว่า ทำให้สามารถส่งข้อมูลในระยะทางไกลได้ดีโดยไม่เกิดปัญหาความเพี้ยนของสัญญาณจากเวลาหน่วง", "อุปกรณ์รับส่งข้อมูลมีราคาแพงกว่าและซับซ้อนน้อยกว่า", "สามารถส่งข้อมูลทุกบิตพร้อมกันในเวลาเดียวกันได้ทันที"], ans: 1 },
+            { q: "โปรโตคอล I2C (Inter-Integrated Circuit) ใช้สายสัญญาณพื้นฐานกี่เส้นในการสื่อสารข้อมูลระหว่างอุปกรณ์", options: ["1 เส้น", "2 เส้น (SDA และ SCL)", "4 เส้น (Tx, Rx, Vcc, GND)", "8 เส้นขนาน"], ans: 1 },
+            { q: "ในการสื่อสารข้อมูลแบบอนุกรมผ่านโปรโตคอล SPI (Serial Peripheral Interface) สายสัญญาณที่มีชื่อว่า SCLK ทำหน้าที่อะไร", options: ["ส่งข้อมูลขาเข้า (Master In Slave Out)", "ส่งข้อมูลขาออก (Master Out Slave In)", "ส่งสัญญาณนาฬิกา (Clock) เพื่อซิงโครไนซ์จังหวะการรับส่งข้อมูล", "เลือกอุปกรณ์ไอซีปลายทาง (Chip Select / Slave Select)"], ans: 2 },
+            { q: "การสื่อสารแบบ UART (Universal Asynchronous Receiver-Transmitter) จัดเป็นการสื่อสารข้อมูลแบบใด", options: ["การสื่อสารแบบซิงโครไนซ์ (Synchronous)", "การสื่อสารแบบอะซิงโครไนซ์ (Asynchronous) โดยไม่ต้องใช้สายสัญญาณนาฬิกาเชื่อมต่อร่วมกัน", "การสื่อสารแบบขนานความเร็วสูง", "การสื่อสารผ่านคลื่นวิทยุไร้สายระยะไกล"], ans: 1 },
+            { q: "มาตรฐานการสื่อสารอนุกรมระยะไกล RS-485 มีจุดเด่นสำคัญกว่า RS-232 ในข้อใด", options: ["ใช้อุปกรณ์แปลงสัญญาณราคาถูกกว่ามาก", "รองรับการเชื่อมต่อแบบหลายอุปกรณ์ (Multi-drop) บนสายเส้นเดียวกันและส่งระยะทางได้ไกลขึ้น", "มีความเร็วในการส่งข้อมูลสูงกว่า USB 3.0 หลายเท่า", "ไม่ต้องใช้ไฟเลี้ยงวงจรในการทำงาน"], ans: 1 },
+            { q: "ไมโครคอนโทรลเลอร์ (Microcontroller) ทำหน้าที่หลักอย่างไรในระบบอินเตอร์เฟซควบคุมอุปกรณ์", options: ["เป็นแหล่งจ่ายไฟกระแสตรงแรงดันสูงให้กับระบบ", "ทำหน้าที่ประมวลผลข้อมูล แปลงสัญญาณ และควบคุมการทำงานตามโปรแกรมคำสั่งที่เขียนไว้", "เป็นอุปกรณ์แสดงผลข้อมูลแบบตัวอักษร", "ทำหน้าที่ตรวจจับอุณหภูมิโดยรอบเท่านั้น"], ans: 1 },
+            { q: "สัญญาณอนาล็อก (Analog Signal) มีลักษณะตามข้อใด", options: ["มีค่าสถานะเพียงสองระดับคือ 0 และ 1", "เป็นสัญญาณต่อเนื่องที่มีค่าเปลี่ยนแปลงไปตามเวลาอย่างราบเรียบ", "เป็นสัญญาณดิจิทัลที่ถูกแปลงเป็นรหัสฐานสอง", "ไม่มีความเกี่ยวข้องกับปริมาณทางกายภาพ"], ans: 1 },
+            { q: "วงจร ADC (Analog-to-Digital Converter) ทำหน้าที่อะไรในระบบอินเตอร์เฟซเซนเซอร์", options: ["แปลงสัญญาณดิจิทัลให้เป็นสัญญาณอนาล็อกเพื่อขับมอเตอร์", "แปลงสัญญาณไฟฟ้าแบบอนุกรมให้เป็นสัญญาณขนาน", "แปลงสัญญาณไฟฟ้าแบบอนาล็อกให้เป็นข้อมูลตัวเลขแบบดิจิทัลที่ไมโครคอนโทรลเลอร์นำไปประมวลผลต่อได้", "ขยายสัญญาณแรงดันไฟฟ้าให้มีขนาดสูงขึ้น"], ans: 2 },
+            { q: "หากสัญญาณอนาล็อกขาเข้ามีค่าแรงดันอยู่ระหว่าง 0 ถึง 5 โวลต์ และใช้ ADC ขนาด 10 บิต ค่าความละเอียด (Resolution) ทางทฤษฎีจะมีค่าเท่ากับกี่ระดับ", options: ["มูลค่า 256 ระดับ", "มูลค่า 512 ระดับ", "มูลค่า 1,024 ระดับ", "มูลค่า 4,096 ระดับ"], ans: 2 },
+            { q: "วงจร DAC (Digital-to-Analog Converter) ทำหน้าที่ตรงกันข้ามกับข้อใด", options: ["ADC (Analog-to-Digital Converter)", "PWM (Pulse Width Modulation)", "GPIO (General Purpose Input/Output)", "UART Interface"], ans: 0 },
+            { q: "เทคนิค PWM (Pulse Width Modulation) มักถูกนำมาประยุกต์ใช้อย่างแพร่หลายในงานอินเตอร์เฟซเพื่อวัตถุประสงค์ใด", options: ["แปลงความถี่สัญญาณวิทยุ", "ควบคุมความเร็วรอบของมอเตอร์กระแสตรง หรือหรี่ความสว่างของหลอด LED", "แปลงสัญญาณอนุกรมเป็นขนาน", "ตรวจจับอุณหภูมิห้อง"], ans: 1 },
+            { q: "ค่า Duty Cycle ของสัญญาณ PWM ที่มีคาบเวลา (Period) ทั้งหมด 10 มิลลิวินาที โดยช่วงสัญญาณเป็น HIGH เท่ากับ 4 มิลลิวินาที มีค่าเท่ากับกี่เปอร์เซ็นต์", options: ["20%", "40%", "50%", "80%"], ans: 1 },
+            { q: "โมดูลรีเลย์ (Relay Module) ที่ใช้เชื่อมต่อระหว่างไมโครคอนโทรลเลอร์ไฟต่ำ (เช่น 5V) กับเครื่องใช้ไฟฟ้าแรงดันสูง (เช่น 220V AC) ทำหน้าที่หลักตามข้อใด", options: ["แปลงความถี่ไฟฟ้ากระแสสลับ", "ทำหน้าที่เป็นสวิตช์อิเล็กทรอนิกส์ตัดต่อวงจรและช่วยแยกกัลวานิค (Galvanic Isolation) เพื่อความปลอดภัย", "เพิ่มแรงดันไฟฟ้าในวงจรไมโครคอนโทรลเลอร์ให้สูงขึ้น", "ลดสัญญาณรบกวนแม่เหล็กไฟฟ้าในอากาศ"], ans: 1 },
+            { q: "การเชื่อมต่อจอแสดงผลแบบ LCD 16x2 แบบขนานทั่วไป มักต้องใช้สายสัญญาณควบคุมข้อมูลจำนวนกี่เส้นเป็นอย่างน้อย (เมื่อต่อแบบ 4-bit mode รวมสายควบคุม)", options: ["2 เส้น", "4 เส้น", "6 เส้น", "16 เส้น"], ans: 2 },
+            { q: "โปรโตคอลการสื่อสารอนุกรมแบบใดที่นิยมใช้เชื่อมต่อระหว่างการ์ดจอหรืออุปกรณ์ความเร็วสูงภายในคอมพิวเตอร์แบบจุดต่อจุด (Point-to-Point)", options: ["I2C", "SPI", "PCI Express (PCIe)", "1-Wire"], ans: 2 },
+            { q: "พอร์ตแลนหรืออีเทอร์เน็ต (Ethernet Port / RJ45) จัดเป็นอินเตอร์เฟซสำหรับการสื่อสารข้อมูลรูปแบบใด", options: ["การสื่อสารข้อมูลอนุกรมความเร็วสูงผ่านเครือข่ายคอมพิวเตอร์ (Network Interface)", "การสื่อสารข้อมูลอนาล็อกเสียงพูด", "การสื่อสารแบบขนานระยะใกล้ภายในแผงวงจรหลัก", "การเชื่อมต่ออุปกรณ์จัดเก็บข้อมูลสำรองภายนอก"], ans: 0 },
+            { q: "การเชื่อมต่อไร้สายระยะสั้น (Short-range Wireless) บลูทูธ (Bluetooth) ใช้คลื่นความถี่วิทยุย่านใดในการสื่อสาร", options: ["ย่านความถี่ 2.4 GHz", "ย่านความถี่ 50 MHz", "ย่านความถี่อินฟราเรด", "ย่านความถี่วิทยุ AM"], ans: 0 },
+            { q: "เทคโนโลยีการสื่อสารไร้สาย Wi-Fi (IEEE 802.11) ทำหน้าที่หลักในระบบอินเตอร์เฟซยุคใหม่เพื่อสิ่งใด", options: ["เชื่อมต่ออุปกรณ์เข้าสู่ระบบเครือข่ายอินเทอร์เน็ตและรับส่งข้อมูลไร้สายความเร็วสูง", "ชาร์จแบตเตอรี่ให้อุปกรณ์เคลื่อนที่แบบไร้สาย", "ตรวจจับตำแหน่งพิกัดทางภูมิศาสตร์ของวัตถุ", "ควบคุมการเปิดปิดรีเลย์ระยะใกล้ผ่านสนามแม่เหล็ก"], ans: 0 },
+            { q: "เซนเซอร์วัดอุณหภูมิและความชื้นแบบดิจิทัลรุ่นยอดนิยม เช่น DHT11 หรือ DHT22 ใช้รูปแบบอินเตอร์เฟซการสื่อสารข้อมูลแบบใดกับไมโครคอนโทรลเลอร์", options: ["อนุกรมแบบสายเดี่ยวเฉพาะตัว (Custom Single-wire 2-way protocol)", "ขนาน 8 บิต", "อนาล็อกแบบแรงดันตรง", "อินเตอร์เฟซผ่านพอร์ตขนานแบบปรินต์เตอร์"], ans: 0 },
+            { q: "การแปลงระดับสัญญาณแรงดันไฟฟ้า (Logic Level Converter) มีความจำเป็นในกรณีใดเมื่อออกแบบวงจรอิเล็กทรอนิกส์", options: ["เมื่อต้องการเพิ่มความสว่างของหลอดไฟ LED", "เมื่อต้องการเชื่อมต่ออุปกรณ์ที่ใช้ไฟเลี้ยงระดับ 3.3V เข้ากับอุปกรณ์ที่ใช้ไฟเลี้ยงระดับ 5V", "เมื่อต้องการลดสัญญาณรบกวนจากสายไฟ AC", "เมื่อต้องการเปลี่ยนสัญญาณอนาล็อกเป็นดิจิทัล"], ans: 1 },
+            { q: "ออปโตคัปเปลอร์ (Optocoupler หรือ Opto-isolator) ใช้อุปกรณ์ใดเป็นสื่อกลางในการส่งผ่านสัญญาณไฟฟ้าระหว่างวงจรขาเข้าและขาออก", options: ["สนามแม่เหล็กไฟฟ้าจากขดลวดทองแดง", "แสง (แสงอินฟราเรดจาก LED และตัวรับแสงโฟโตทรานซิสเตอร์)", "คลื่นความถี่วิทยุความเร็วสูง", "ความร้อนจากการเผาไหม้สารกึ่งตัวนำ"], ans: 1 },
+            { q: "พอร์ต HDMI (High-Definition Multimedia Interface) ทำหน้าที่ส่งผ่านสัญญาณประเภทใดพร้อมกันในสายเส้นเดียว", options: ["สัญญาณภาพวีดีโอดิจิทัลและความละเอียดสูงร่วมกับสัญญาณเสียงดิจิทัล", "สัญญาณภาพอนาล็อกแบบเก่าและเสียงโมโน", "เฉพาะข้อมูลอินเทอร์เน็ตความเร็วสูงเท่านั้น", "สัญญาณควบคุมมอเตอร์สเต็ปเปอร์"], ans: 0 },
+            { q: "การเชื่อมต่ออุปกรณ์แบบ Plug and Play ในระบบคอมพิวเตอร์และอินเตอร์เฟซหมายถึงข้อใด", options: ["ผู้ใช้ต้องเขียนโปรแกรมไดรเวอร์เองทุกครั้งที่เชื่อมอุปกรณ์ใหม่", "ระบบปฏิบัติการสามารถตรวจพบและติดตั้งค่าใช้งานอุปกรณ์ต่อพ่วงได้โดยอัตโนมัติทันทีที่เชื่อมต่อ", "ต้องทำการรีสตาร์ทเครื่องคอมพิวเตอร์ทุกครั้งที่เสียบสายอุปกรณ์", "อุปกรณ์จะสามารถทำงานได้เฉพาะเมื่อไม่มีการจ่ายไฟเลี้ยง"], ans: 1 },
+            { q: "ข้อใดคือหน้าที่ของตัวต้านทานแบบ Pull-up Resistor ในขาพอร์ตอินพุตของไมโครคอนโทรลเลอร์", options: ["ดึงระดับแรงดันที่ขาอินพุตให้มีค่าเป็นลอจิก \"0\" เสมอเมื่อสวิตช์เปิด", "ดึงระดับแรงดันที่ขาอินพุตให้มีค่าเป็นลอจิก \"1\" (High) อย่างแน่นอน เพื่อป้องกันไม่ให้เกิดสภาวะสัญญาณลอย (Floating State)", "ช่วยลดทอนกระแสไฟฟ้าที่ไหลเข้าสู่ไมโครคอนโทรลเลอร์ไม่ให้ชิปไหม้", "ทำหน้าที่กรองสัญญาณความถี่สูงจากคลื่นวิทยุ"], ans: 1 },
+            { q: "หากต้องการเชื่อมต่อบอร์ดไมโครคอนโทรลเลอร์เข้ากับคอมพิวเตอร์เพื่ออัปโหลดโค้ดโปรแกรมผ่านพอร์ต USB แต่ชิปไมโครคอนโทรลเลอร์รองรับเฉพาะพอร์ต Serial แบบ UART จะต้องใช้อุปกรณ์ใดช่วยแปลงสัญญาณ", options: ["อุปกรณ์แปลงระดับสัญญาณ USB-to-Serial (เช่น ชิป CH340 หรือ CP2102)", "วงจรกรองกระแสไฟสลับเป็นกระแสตรง", "วงจรขยายสัญญาณเสียง", "ตัวเก็บประจุแบบเซรามิก"], ans: 0 },
+            { q: "โปรโตคอลการสื่อสารอนุกรมแบบใดที่ใช้สายสัญญาณเพียงเส้นเดียว (ไม่รวมสายกราวด์) และสามารถเชื่อมต่ออุปกรณ์หลายตัวรับส่งข้อมูลแบบบิดา-บุตรบนสายเส้นเดียวกันได้ (เช่น อุปกรณ์วัดอุณหภูมิ DS18B20)", options: ["I2C", "SPI", "1-Wire", "RS-232"], ans: 2 },
+            { q: "ในระบบบัสสื่อสารข้อมูลแบบ CAN Bus (Controller Area Network) ที่นิยมใช้ในอุตสาหกรรมและรถยนต์ อาศัยหลักการส่งสัญญาณแบบใดเพื่อความทนทานต่อสัญญาณรบกวน", options: ["ส่งสัญญาณแบบแรงดันเดี่ยวอ้างอิงกราวด์", "ส่งสัญญาณแบบผลต่างแรงดันบนสายคู่บิดเกลียว (Differential Signaling)", "ส่งสัญญาณผ่านแสงไฟเบอร์ออพติกความเร็วสูง", "ส่งสัญญาณด้วยการแปลงเป็นคลื่นวิทยุ FM"], ans: 1 },
+            { q: "ตัวเข้ารหัสสัญญาณหมุน (Rotary Encoder) ที่เชื่อมต่อกับไมโครคอนโทรลเลอร์ ส่งสัญญาณพัลส์ออกมา 2 ช่อง (Channel A และ B) มีประโยชน์หลักอย่างไรในการอินเตอร์เฟซ", options: ["ช่วยตรวจจับทั้งความเร็ว ตำแหน่ง และทิศทางการหมุนว่าหมุนไปทางซ้ายหรือขวา", "ช่วยเพิ่มแรงดันไฟฟ้าให้สูงขึ้นเท่าตัว", "ทำหน้าที่เป็นแหล่งจ่ายไฟสำรอง", "แปลงสัญญาณดิจิทัลเป็นเสียงเตือน"], ans: 0 },
+            { q: "ในการออกแบบวงจรพิมพ์ (PCB) สำหรับเชื่อมต่ออินเตอร์เฟซความถี่สูง การเดินลายวงจรประเภท Differential Pair จะต้องคำนึงถึงสิ่งใดมากที่สุด", options: ["ความกว้างของเส้นทองแดงต้องใหญ่ที่สุดเท่าที่จะทำได้", "ความยาวและระยะห่างระหว่างเส้นคู่สัญญาณทั้งสองเส้นต้องเท่ากันสม่ำเสมอเพื่อควบคุมค่าอิมพีแดนซ์", "ต้องเดินเส้นทองแดงให้วนเป็นวงกลมเพื่อเก็บสนามแม่เหล็ก", "ต้องเคลือบผิวทองแดงด้วยตะกั่วหนาๆ"], ans: 1 },
+            { q: "ตัวแปลงสัญญาณอนาล็อกเป็นดิจิทัล (ADC) แบบ Successive Approximation Register (SAR) มีจุดเด่นด้านใด", options: ["มีความเร็วในการแปลงสัญญาณสูงและมีความละเอียดปานกลางถึงสูง นิยมใช้ทั่วไป", "มีความเร็วในการแปลงต่ำมากแต่ราคาถูกที่สุด", "สามารถแปลงสัญญาณอนาล็อกต่อเนื่องได้โดยไม่ต้องใช้สัญญาณนาฬิกา", "เหมาะสำหรับการส่งข้อมูลระยะไกลผ่านดาวเทียมเท่านั้น"], ans: 0 },
+            { q: "คำว่า \"Baud Rate\" ในการสื่อสารข้อมูลแบบอนุกรม หมายถึงข้อใด", options: ["ปริมาณข้อมูลรวมทั้งหมดที่ส่งได้ในหนึ่งวัน", "จำนวนครั้งของการเปลี่ยนแปลงสถานะสัญญาณหรือความเร็วในการส่งสัญญาณต่อวินาที", "ระยะทางสูงสุดที่สัญญาณสามารถส่งไปถึง", "แรงดันไฟฟ้าสูงสุดที่ใช้ในระบบสื่อสาร"], ans: 1 },
+            { q: "หากอุปกรณ์ส่งข้อมูลตั้งค่า Baud Rate ไว้ที่ 9600 แต่ฝั่งรับตั้งค่าไว้ที่ 115200 จะเกิดผลอย่างไรในการสื่อสาร", options: ["ข้อมูลจะถูกส่งเร็วกว่าปกติ 10 เท่าโดยไม่มีข้อผิดพลาด", "ข้อมูลที่ได้รับจะอ่านไม่รู้เรื่อง (Garbled Data) หรือเกิดความผิดพลาดในการรับส่งข้อมูล", "คอมพิวเตอร์จะเกิดอาการจอฟ้าทันที", "อุปกรณ์ทั้งสองตัวจะรีเซ็ตตัวเองโดยอัตโนมัติ"], ans: 1 },
+            { q: "ระบบอินเตอร์เฟซแบบสัมผัส (Touch Screen) แบบคาปาซิทีฟ (Capacitive Touch) อาศัยหลักการใดในการตรวจจับตำแหน่งการสัมผัส", options: ["การกดทับทางกลทำให้ฟิล์มสองชั้นแตะกัน", "การเปลี่ยนแปลงสนามไฟฟ้าและความจุไฟฟ้าเมื่อนิ้วมือมนุษย์เข้าไปสัมผัสกระจกหน้าจอ", "การสะท้อนของคลื่นเสียงความถี่สูงบนผิวจอ", "การตัดกันของลำแสงอินฟราเรดแนวตั้งและแนวนอน"], ans: 1 },
+            { q: "พอร์ตเชื่อมต่อมาตรฐานใดที่ใช้สำหรับการ์ดจอแสดงผลรุ่นใหม่บนเมนบอร์ดคอมพิวเตอร์ในปัจจุบันเพื่อส่งข้อมูลภาพความเร็วสูง", options: ["PCI Express x16 Slot", "Parallel Port", "PS/2 Port", "COM Port"], ans: 0 },
+            { q: "การเชื่อมต่ออุปกรณ์เซนเซอร์อุตสาหกรรมเข้ากับระบบควบคุมด้วยสัญญาณมาตรฐาน 4-20 mA มีข้อดีเหนือกว่าระบบ 0-10 V ในข้อใด", options: ["ไม่ต้องใช้แหล่งจ่ายไฟภายนอกเลย", "สัญญาณไม่ค่อยถูกรบกวนจากสัญญาณไฟฟ้าภายนอก และสามารถตรวจสอบสายขาด (Broken Wire Detection) ได้ง่ายเมื่อกระแสลดลงต่ำกว่า 4 mA", "อุปกรณ์ราคาถูกกว่าและติดตั้งง่ายกว่ามาก", "สามารถส่งข้อมูลได้รวดเร็วกว่าแสง"], ans: 1 },
+            { q: "ในระบบบัส I2C ขาอุปกรณ์ที่มีชื่อว่า SCL และ SDA ย่อมาจากคำว่าอะไรตามลำดับ", options: ["Serial Clock / Serial Data", "System Control / Signal Data", "Serial Communication Link / System Device Address", "Source Clock / Source Data"], ans: 0 },
+            { q: "เหตุผลข้อใดสำคัญที่สุดที่ทำให้การออกแบบระบบอินเตอร์เฟซต้องคำนึงถึงมาตรฐาน (Standards) ทางวิศวกรรม", options: ["เพื่อให้ชิ้นงานมีน้ำหนักมากและดูแข็งแรง", "ทำให้อุปกรณ์จากต่างผู้ผลิตสามารถนำมาเชื่อมต่อและทำงานร่วมกันได้อย่างถูกต้องเข้ากันได้", "เพื่อให้ต้นทุนการผลิตมีราคาสูงขึ้น", "ป้องกันไม่ให้บุคคลทั่วไปสามารถซ่อมแซมอุปกรณ์ได้"], ans: 1 }
+        ];
+
+        let questions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = [];
+        let studentName = "";
+        
+        // ตัวแปรระบบป้องกันการทุจริต
+        let isExamActive = false;
+        let cheatDeductions = 0;
+        let cheatCooldown = false;
+
+        // ตัวแปรจับเวลา (60 นาที = 3600 วินาที)
+        let timeRemaining = 60 * 60;
+        let timerInterval;
+
+        // ฟังก์ชันสำหรับสุ่มตำแหน่งสมาชิกใน Array (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // ฟังก์ชันเตรียมข้อมูลข้อสอบ (สุ่มข้อสอบ และ สุ่มตัวเลือก)
+        function prepareExamQuestions() {
+            let prepared = JSON.parse(JSON.stringify(rawQuestions));
+
+            prepared.forEach(q => {
+                let optionsWithFlag = q.options.map((optText, index) => ({
+                    text: optText,
+                    isCorrect: index === q.ans
+                }));
+
+                shuffleArray(optionsWithFlag);
+
+                q.options = optionsWithFlag.map(item => item.text);
+                q.ans = optionsWithFlag.findIndex(item => item.isCorrect);
+            });
+
+            shuffleArray(prepared);
+            return prepared;
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startExam() {
+            const nameInput = document.getElementById('studentName').value.trim();
+            if (nameInput === "") {
+                alert("ACCESS DENIED: กรุณากรอกชื่อ-นามสกุล ก่อนเริ่มทำข้อสอบครับ");
+                return;
+            }
+            studentName = nameInput;
+
+            alert("⚠️ กฎกติกาและการป้องกันการทุจริต ⚠️\n\n1. ห้ามออกจากหน้าจอ หรือสลับไปแท็บ/โปรแกรมอื่น\n2. ห้ามคัดลอกข้อความใดๆ\n3. ห้ามบันทึกภาพหน้าจอ (Screen Capture / PrintScreen)\n\n*** หากฝ่าฝืน ระบบจะเตือนและ 'หักคะแนน 1 คะแนน' ต่อการทำผิด 1 ครั้งทันที ***\n\nกด OK เพื่อเริ่มการทดสอบ");
+
+            questions = prepareExamQuestions();
+            userAnswers = new Array(questions.length).fill(null);
+            currentQuestion = 0;
+            cheatDeductions = 0;
+
+            showScreen('exam-screen');
+            loadQuestion(currentQuestion);
+            
+            timerInterval = setInterval(updateTimer, 1000);
+
+            // การแก้ไขบั๊ก: หน่วงเวลา 1 วินาทีก่อนที่จะเปิดระบบแจ้งเตือนทุจริต 
+            // เพื่อป้องกันบั๊กที่เกิดจากเว็บบราวเซอร์เสียโฟกัสตอนกดปิดหน้าต่างแจ้งเตือน Alert
+            setTimeout(() => {
+                isExamActive = true;
+            }, 1000);
+        }
+
+        // ==========================================
+        // ระบบตรวจจับการทุจริต (Anti-Cheating System)
+        // ==========================================
+        function handleCheating(reason) {
+            if (!isExamActive || cheatCooldown) return;
+            
+            cheatCooldown = true;
+            cheatDeductions++; // หัก 1 คะแนน
+            
+            alert(`🚨 ตรวจพบการทุจริต: ${reason}\n\nคุณถูกหัก 1 คะแนน!\n(โดนหักคะแนนสะสมไปแล้ว ${cheatDeductions} คะแนน)`);
+            
+            setTimeout(() => { cheatCooldown = false; }, 1000);
+        }
+
+        // 1. ดักจับการสลับแท็บเบราว์เซอร์
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                handleCheating("ออกจากหน้าจอข้อสอบ (เปลี่ยนแท็บ)");
+            }
+        });
+
+        // 2. ดักจับการสลับไปเปิดโปรแกรมอื่น หรือย่อหน้าต่างเบราว์เซอร์
+        window.addEventListener("blur", () => {
+            handleCheating("สลับไปหน้าต่างหรือโปรแกรมอื่น");
+        });
+
+        // 3. ดักจับการคัดลอกข้อความ
+        document.addEventListener("copy", (e) => {
+            handleCheating("พยายามคัดลอกข้อความ");
+            e.preventDefault();
+        });
+
+        // 4. ป้องกันการคลิกขวา
+        document.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+        });
+
+        // 5. ดักจับการกดปุ่ม PrintScreen (ล้างข้อมูล Clipboard ร่วมด้วย)
+        window.addEventListener("keyup", (e) => {
+            if (e.key === "PrintScreen") {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(""); // ล้าง Clipboard เพื่อไม่ให้วางรูปได้
+                }
+                handleCheating("พยายามบันทึกภาพหน้าจอ (PrintScreen)");
+            }
+        });
+
+        // 6. ดักจับคีย์ลัด Ctrl+C, PrintScreen และคีย์ลัด Screenshot ต่างๆ
+        window.addEventListener("keydown", (e) => {
+            // ดักจับ Ctrl+C / Cmd+C
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                handleCheating("พยายามคัดลอกข้อความโดยใช้คีย์ลัด");
+                e.preventDefault();
+            }
+
+            // ดักจับปุ่ม PrintScreen ในจังหวะ Down
+            if (e.key === "PrintScreen") {
+                handleCheating("พยายามบันทึกภาพหน้าจอ (PrintScreen)");
+                e.preventDefault();
+            }
+
+            // ดักจับคีย์ลัดแค็ปหน้าจอ: Win+Shift+S, Cmd+Shift+3/4/5 หรือ Ctrl+Shift+S
+            if ((e.key === 'S' || e.key === 's' || e.key === '3' || e.key === '4' || e.key === '5') && 
+                (e.shiftKey && (e.metaKey || e.ctrlKey))) {
+                handleCheating("พยายามใช้คีย์ลัดบันทึกภาพหน้าจอ");
+                e.preventDefault();
+            }
+        });
+        // ==========================================
+
+        function updateTimer() {
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                submitExam();
+                return;
+            }
+            timeRemaining--;
+            let m = Math.floor(timeRemaining / 60);
+            let s = timeRemaining % 60;
+            document.getElementById('timer').innerText = `TIME: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function loadQuestion(index) {
+            const qObj = questions[index];
+            document.getElementById('question-progress').innerText = `Q: ${index + 1}/${questions.length}`;
+            document.getElementById('question-text').innerText = qObj.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            qObj.options.forEach((opt, i) => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+                if (userAnswers[index] === i) li.classList.add('selected');
+                
+                li.innerText = opt;
+                li.onclick = () => selectOption(index, i, li);
+                optionsContainer.appendChild(li);
+            });
+
+            if (index === questions.length - 1) {
+                document.getElementById('btn-next').style.display = 'none';
+                document.getElementById('btn-submit').style.display = 'block';
+            } else {
+                document.getElementById('btn-next').style.display = 'block';
+                document.getElementById('btn-submit').style.display = 'none';
+            }
+        }
+
+        function selectOption(qIndex, optIndex, element) {
+            userAnswers[qIndex] = optIndex;
+            const siblings = element.parentElement.children;
+            for (let el of siblings) {
+                el.classList.remove('selected');
+            }
+            element.classList.add('selected');
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentQuestion] === null) {
+                alert("กรุณาเลือกคำตอบก่อนไปข้อถัดไปครับ");
+                return;
+            }
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion(currentQuestion);
+            }
+        }
+
+        function submitExam() {
+            if (userAnswers.includes(null) && timeRemaining > 0) {
+                if (!confirm("คุณยังทำข้อสอบไม่ครบทุกข้อ ต้องการส่งคำตอบเลยหรือไม่?")) return;
+            }
+
+            clearInterval(timerInterval);
+            isExamActive = false;
+            
+            // ตรวจคะแนนดิบ
+            let rawScore = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans === questions[i].ans) rawScore++;
+            });
+
+            // คำนวณคะแนนสุทธิหลังหักคะแนนทุจริต
+            score = rawScore - cheatDeductions;
+            if (score < 0) score = 0;
+
+            showScreen('result-screen');
+            
+            document.getElementById('score-display').innerHTML = `
+                คะแนนสุทธิ: ${score} / ${questions.length}<br>
+                <span style="font-size: 1.2rem; color: var(--neon-pink); display: block; margin-top: 15px;">
+                    (ทำได้ ${rawScore} คะแนน, หักจากการทุจริต ${cheatDeductions} คะแนน)
+                </span>
+            `;
+
+            sendDataToGAS(studentName, score);
+        }
+
+        function sendDataToGAS(name, score) {
+            const payload = JSON.stringify({ name: name, score: score });
+
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: payload
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('saving-status').style.display = 'none';
+                if (data.result === 'success') {
+                    document.getElementById('success-message').style.display = 'block';
+                } else {
+                    document.getElementById('error-message').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                document.getElementById('saving-status').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
